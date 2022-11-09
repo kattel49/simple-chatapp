@@ -1,25 +1,27 @@
 import socket
 import threading
 
-host = "localhost"
+host = "127.0.0.1"
 port = 45001
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
 server.listen()
+print(server)
 
 clients = []
 nicknames = []
 
+# send message to all clients
 def broadcast(msg):
     for client in clients:
         client.send(msg)
 
-
+# handle client connections
 def handle(client):
     while True:
         try:
-            msg = client.recv(1024).decode('ascii')
+            msg = client.recv(1024)
             broadcast(msg)
         except:
             # index of the client 
@@ -35,8 +37,10 @@ def handle(client):
 
 def receive():
     while True:
+        print("Waiting for connection")
         client, address = server.accept()
         print(f"Connected to {client} at {str(address)}")
+
         client.send('NICKNAME'.encode('ascii'))
         nickname = client.recv(1024).decode('ascii')
 
@@ -48,3 +52,9 @@ def receive():
         broadcast(f"{nickname} joined the chat".encode('ascii'))
         client.send('Connected to the server'.encode('ascii'))
 
+        thread = threading.Thread(target=handle, args=(client,))
+        thread.start()
+
+if __name__ == "__main__":
+    print("The server is running")
+    receive()
